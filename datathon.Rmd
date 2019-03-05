@@ -1,0 +1,295 @@
+---
+title: "datathon_map"
+author: "jmpark"
+date: "2019년 3월 5일"
+output: html_document
+---
+
+### Data Load
+```{r,message=FALSE,warning=FALSE}
+######## [LIBRARY] ########
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+
+
+######## [DATA] ########
+datathon <- read_xlsx('C:\\Users\\jeong\\Desktop\\datathon.xlsx',sheet = 1)
+country <- read_xlsx('C:\\Users\\jeong\\Desktop\\datathon.xlsx',sheet = 2)
+
+```
+
+### Data Preprocessing
+```{r,message=FALSE,warning=FALSE}
+######## [CODE] data of ages 0-4 (year: 2001-2015) ########
+datathon2 <- datathon
+## latest 15-year data (2003-2015)
+myyear <- as.character(2003:2017)
+
+## select rows that do not have any NA
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+mydata <- completeFun(datathon2,myyear)
+mydata2 <- mydata[,-c(5:47,63)]
+
+```
+
+
+### Demographic Dividend
+```{r,message=FALSE,warning=FALSE}
+######## [DATA] data_all ########
+## group data by year
+data_all <- mydata2 %>% 
+  gather(key = year, value = value,
+         -`Country Name`,-`Country Code`,-`Indicator Code`,-`Indicator Name`)
+
+######## [DATA] data_all2 / all_single / all_group ########
+## classify data
+data_all2 <- left_join(data_all,country %>% 
+                         select(`Country Code`,Region))
+## continental information O
+Non_region <- data_all2 %>% 
+  distinct(`Country Name`,`Country Code`,Region) %>% 
+  filter(is.na(Region)) %>% select(`Country Name`)
+
+## continental information X
+region <- data_all2 %>% 
+  distinct(`Country Name`,`Country Code`,Region) %>% 
+  filter(!is.na(Region)) %>% select(`Country Name`)
+
+all_single <- data_all2 %>% 
+  filter(`Country Name` %in% region$`Country Name`)
+all_group <- data_all2 %>% 
+  filter(`Country Name` %in% Non_region$`Country Name`) %>% 
+  select(-Region)
+
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+######## [DATA] demo ########
+demo <- all_group %>% 
+  filter(`Country Name` %in% c('Early-demographic dividend',
+                               'Late-demographic dividend',
+                               'Post-demographic dividend',
+                               'Pre-demographic dividend'))
+
+## rearrange levels
+demo$`Country Name` <- factor(demo$`Country Name`,
+                              levels = c('Pre-demographic dividend',
+                                         'Early-demographic dividend',
+                                         'Late-demographic dividend',
+                                         'Post-demographic dividend'))
+
+
+######## [DATA] demo_f / demo_m ########
+demo_f <- demo %>% 
+  filter(`Indicator Code` %in% c('SE.PRM.NENR.FE',
+                                 'SE.SEC.NENR.FE'))
+demo_m <- demo %>% 
+  filter(`Indicator Code` %in% c('SE.PRM.NENR.MA',
+                                 'SE.SEC.NENR.MA'))
+ff <- demo_f %>% 
+  select(`Country Name`,`Indicator Name`,year,value) %>% 
+  mutate('gender'='Female')
+mm <- demo_m %>% 
+  select(`Country Name`,`Indicator Name`,year,value) %>% 
+  mutate('gender'='Male')
+tt <- rbind(ff,mm)
+
+ggplot(tt,aes(year,value,
+              group=interaction(`Indicator Name`,gender),
+              color=interaction(`Indicator Name`,gender),
+              linetype=interaction(`Indicator Name`,gender))) +
+  geom_line(lwd=1) + theme_bw() +
+  labs(y='(% net)') +
+  theme(legend.position = 'bottom',
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_x_discrete(breaks = seq(2003,2017,by=3)) +
+  scale_color_manual('',values = c('tomato','royalblue1','tomato','royalblue1'),
+                     labels = c('Primary School enrollment, Female',
+                                'Secondary School enrollment, Female',
+                                'Primary School enrollment, Male',
+                                'Secondary School enrollment, Male')) +
+  scale_linetype_manual('',values = c(1,1,3,3),
+                     labels = c('Primary School enrollment, Female',
+                                'Secondary School enrollment, Female',
+                                'Primary School enrollment, Male',
+                                'Secondary School enrollment, Male')) +
+  guides(color=guide_legend(nrow=2,byrow = T)) +
+  facet_grid(~`Country Name`)
+
+```
+
+ It is clearly shown that as countries enter a more developed demographic period, the percentage of people engaging in education rises. This supports the findings of recent research that the demographic dividend is an education-triggered dividend.
+ 
+ 
+### Variables related to the Demographic dividend
+```{r,message=FALSE,warning=FALSE}
+######## [DATA] demo_depend ########
+demo_depend <- demo %>% 
+  filter(`Indicator Code` %in% c('SP.POP.DPND',
+                                 'SL.UEM.TOTL.FE.ZS',
+                                 'SP.RUR.TOTL',
+                                 'SH.IMM.IDPT',
+                                 'SH.IMM.MEAS',
+                                 'SH.IMM.POL3',
+                                 'SH.DYN.MORT'))
+
+myplot_fun <- function(mydata=data,mytitle=title,legend_pos='none'){
+  p1 <- ggplot(mydata,
+       aes(year,value,group=`Country Name`,color=`Country Name`)) +
+  geom_line(lwd=1) + theme_bw() +
+  labs(y='',title=mytitle) +
+  theme(legend.position = legend_pos,
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(size = 8)) +
+  scale_x_discrete(breaks = seq(2003,2017,by=3)) + 
+  guides(color=guide_legend(nrow=1,byrow=TRUE)) +
+  scale_color_manual('',values = 1:4)
+  return(p1)
+}
+
+p11 <- myplot_fun(mydata = demo_depend %>% 
+                    filter(`Indicator Code`=='SP.POP.DPND'),
+                  mytitle = 'Age dependency ratio (% of working-age population)',
+                  legend_pos = 'bottom')
+
+p12 <- myplot_fun(mydata = demo_depend %>% 
+                    filter(`Indicator Code`=='SL.UEM.TOTL.FE.ZS'),
+                  mytitle = 'Unemployment, female (% of female labor force)')
+
+p13 <- myplot_fun(mydata = demo_depend %>% 
+                    filter(`Indicator Code`=='SP.RUR.TOTL'),
+                  mytitle = 'Rural population')
+
+p14 <- myplot_fun(mydata = demo_depend %>% 
+                    filter(`Indicator Code`=='SH.IMM.IDPT'),
+                  mytitle = 'Immunization, DPT (% of children ages 12-23 months)')
+
+p15 <- myplot_fun(mydata = demo_depend %>% 
+                    filter(`Indicator Code`=='SH.IMM.MEAS'),
+                  mytitle = 'Immunization, measles (% of children ages 12-23 months)')
+
+p16 <- myplot_fun(mydata = demo_depend %>% 
+                    filter(`Indicator Code`=='SH.IMM.POL3'),
+                  mytitle = 'Immunization, Pol3 (% of one-year-old children)')
+
+p17 <- myplot_fun(mydata = demo_depend %>% 
+                    filter(`Indicator Code`=='SH.DYN.MORT'),
+                  mytitle = 'Mortality rate, under-5 (per 1,000)',
+                  legend_pos = 'bottom')
+
+## extract legend
+## https://github.com/hadley/ggplot2/wiki/Share-a-legend-between-two-ggplot2-graphs
+g_legend<-function(a.gplot){
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  legend <- tmp$grobs[[leg]]
+  return(legend)}
+
+mylegend<-g_legend(p11)
+
+grid.arrange(arrangeGrob(p11 + theme(legend.position="none"),
+                         p12,p13,p14,p15,p16,
+                         nrow = 2),
+             mylegend,
+             heights=c(10,1))
+```
+
+
+```{r,message=FALSE,warning=FALSE}
+p17
+
+```
+
+As countries develop they encounter a process called the demographic transition. In this phase birth rates and death rate both decrease as a country develops into an industrialized economic system. At the same time, as the population becomes more educated the death rate of children steadily decreases.
+Mark the mortality rate of children on the map
+
+```{r,message=FALSE,warning=FALSE}
+library(ggmap)
+library(ggplot2)
+library(dplyr)
+library(PBSmapping) # to clip polygons
+require(ggthemes) # for theme_map, if desired
+
+single <- all_single %>% filter(year==2017,`Indicator Code`=='SH.DYN.MORT')
+country_name <- single %>% distinct(`Country Name`)
+
+## define data (a simple dataset is constructed here
+## for illustration purposes) and background map
+countryData<-data.frame(region=as.character(single$`Country Name`), 
+                        data=single$value)
+nMap <- get_map(location = 'world',zoom=1,maptype="terrain",source="google")
+
+## get country polygon data
+mapdata <- map_data("world")
+mapdata <- left_join(mapdata, countryData, by="region")
+
+## find countries that do not match
+country_name_map <- mapdata %>% filter(!is.na(data)) %>% distinct(region)
+nomatch <- country_name %>% filter(!(`Country Name` %in% country_name_map$region))
+single$`Country Name`[single$`Country Name`=='Antigua and Barbuda'] <- 'Antigua'
+single$`Country Name`[single$`Country Name`=='Bahamas, The'] <- 'Bahamas'
+single$`Country Name`[single$`Country Name`=='Brunei Darussalam'] <- 'Brunei'
+single$`Country Name`[single$`Country Name`=='Cabo Verde'] <- ''
+single$`Country Name`[single$`Country Name`=='Congo, Dem. Rep.'] <- 'Democratic Republic of the Congo'
+single$`Country Name`[single$`Country Name`=='Congo, Rep.'] <- 'Republic of Congo'
+single$`Country Name`[single$`Country Name`=="Cote d'Ivoire"] <- ''
+single$`Country Name`[single$`Country Name`=='Egypt, Arab Rep.'] <- 'Egypt'
+single$`Country Name`[single$`Country Name`=='Eswatini'] <- ''
+single$`Country Name`[single$`Country Name`=='Gambia, The'] <- 'Gambia'
+single$`Country Name`[single$`Country Name`=='Iran, Islamic Rep.'] <- 'Iran'
+single$`Country Name`[single$`Country Name`=='Korea, Dem. People’s Rep.'] <- 'North Korea'
+single$`Country Name`[single$`Country Name`=='Korea, Rep.'] <- 'South Korea'
+single$`Country Name`[single$`Country Name`=='Kyrgyz Republic'] <- 'Kyrgyzstan'
+single$`Country Name`[single$`Country Name`=='Lao PDR'] <- 'Laos'
+single$`Country Name`[single$`Country Name`=='Macedonia, FYR'] <- 'Macedonia'
+single$`Country Name`[single$`Country Name`=='Micronesia, Fed. Sts.'] <- ''
+single$`Country Name`[single$`Country Name`=='Russian Federation'] <- 'Russia'
+single$`Country Name`[single$`Country Name`=='Slovak Republic'] <- 'Slovakia'
+single$`Country Name`[single$`Country Name`=='St. Kitts and Nevis'] <- 'Nevis'
+single$`Country Name`[single$`Country Name`=='St. Lucia'] <- 'Saint Lucia'
+single$`Country Name`[single$`Country Name`=='St. Vincent and the Grenadines'] <- 'Grenada'
+single$`Country Name`[single$`Country Name`=='Syrian Arab Republic'] <- 'Syria'
+single$`Country Name`[single$`Country Name`=='Trinidad and Tobago'] <- 'Trinidad'
+single$`Country Name`[single$`Country Name`=='Tuvalu'] <- ''
+single$`Country Name`[single$`Country Name`=='United Kingdom'] <- 'UK'
+single$`Country Name`[single$`Country Name`=='United States'] <- 'USA'
+single$`Country Name`[single$`Country Name`=='Venezuela, RB'] <- 'Venezuela'
+single$`Country Name`[single$`Country Name`=='West Bank and Gaza'] <- ''
+single$`Country Name`[single$`Country Name`=='Yemen, Rep.'] <- 'Yemen'
+
+countryData<-data.frame(region=factor(single$`Country Name`),
+                        data=single$value)
+nMap <- get_map('world',zoom=1,maptype="terrain",source="google")
+mapdata <- map_data("world")
+mapdata <- left_join(mapdata, countryData, by="region")
+
+## clip polygons to map
+colnames(mapdata)[1:6] <- c("X","Y","PID","POS","region","subregion")
+
+## plot map overlay
+world_map <- map_data("world")
+p <- ggplot() + coord_fixed()
+base_world <- p + geom_polygon(data=world_map,
+                               aes(x=long,
+                                   y=lat,
+                                   group=group))
+real_plot <- base_world +
+  geom_polygon(data=mapdata, aes(x=X, y=Y, group=PID, fill=data), alpha=1) +
+  ggthemes::theme_map() +
+  scale_fill_continuous(low = "moccasin",
+                        high = "firebrick1", 
+                        space = "Lab", guide = "colorbar") +
+  ggtitle('Mortality rate, under-5 (per 1,000)',
+          'Real')
+
+real_plot
+
+```
+
+
