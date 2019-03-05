@@ -1,5 +1,10 @@
 ---
 title: "datathon_map"
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "jmpark"
 date: "2019년 3월 5일"
 output: html_document
@@ -69,7 +74,7 @@ all_group <- data_all2 %>%
 ```
 
 
-```{r,message=FALSE,warning=FALSE}
+```{r,message=FALSE,warning=FALSE,fig.width=10}
 ######## [DATA] demo ########
 demo <- all_group %>% 
   filter(`Country Name` %in% c('Early-demographic dividend',
@@ -128,7 +133,7 @@ ggplot(tt,aes(year,value,
  
  
 ### Variables related to the Demographic dividend
-```{r,message=FALSE,warning=FALSE}
+```{r,message=FALSE,warning=FALSE,fig.width=10}
 ######## [DATA] demo_depend ########
 demo_depend <- demo %>% 
   filter(`Indicator Code` %in% c('SP.POP.DPND',
@@ -209,7 +214,7 @@ p17
 As countries develop they encounter a process called the demographic transition. In this phase birth rates and death rate both decrease as a country develops into an industrialized economic system. At the same time, as the population becomes more educated the death rate of children steadily decreases.
 Mark the mortality rate of children on the map
 
-```{r,message=FALSE,warning=FALSE}
+```{r,message=FALSE,warning=FALSE,fig.width=10}
 library(ggmap)
 library(ggplot2)
 library(dplyr)
