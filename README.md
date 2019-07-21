@@ -14,7 +14,19 @@
         + Can we exhibit a correlation between education and some other indicators?
         + Can we identify the differences regarding cost of treatment and therapeutic development between various geographic areas?  
         
-### Visualizing infant mortality rates
-* In the past, infant mortality rates were very high, but the rates are steadily decreasing due to recent advances in the medical technology and the industrialized economic system. Nonetheless, infant mortality is still on the high trend in many of the developing countries. To find out what causes the differences in infant mortality, we focused on the distinction between each demographic dividend. Afterwards, multiple regression analyses were conducted for variables with high explanatory power. Although the data was from 1960 to 2018, we used the data from 2012 to 2016, to reflect the most recent trends. Using this data, the mortality rate of infants was predicted for the year 2017 and compared with the actual values. We also marked it on the world map to confirm the overall predictability and to make it easier to understand. Through our study, infant mortality rates can be forecasted and we hope that governments can come up with ways to further reduce it.  
+### Datathon - Visualizing infant mortality rates
+* Abstract
+    + In the past, infant mortality rates were very high, but the rates are steadily decreasing due to recent advances in the medical technology and the industrialized economic system. Nonetheless, infant mortality is still on the high trend in many of the developing countries. To find out what causes the differences in infant mortality, we focused on the distinction between each demographic dividend. Afterwards, multiple regression analyses were conducted for variables with high explanatory power. Although the data was from 1960 to 2018, we used the data from 2012 to 2016, to reflect the most recent trends. Using this data, the mortality rate of infants was predicted for the year 2017 and compared with the actual values. We also marked it on the world map to confirm the overall predictability and to make it easier to understand. Through our study, infant mortality rates can be forecasted and we hope that governments can come up with ways to further reduce it.  
 
 * https://jmpark0118.github.io/useR2019/
+
+</br>
+
+### Poster - Forecasting and Visualizing Churn data
+* Abstract
+    + Customer churn occurs when a customer does not like the service of an existing institution or feels that the service of another institution is better. From the agency's perspective, it is more economical to retain existing customers than to attract other customers, so forecasting customer churn is more important than ever. In this study, we conducted visualization to identify the characteristics of variables of mobile carrier termination data and made some statistical models using R. Supervised learning methods such as logistic regression, random forest, SVM and DNN were used. Using data from Kaggle, 7043 customer information with 21 features each, the results of the study show the highest accuracy of 79% in SVM when predicting churn rate and the most prominent variable for high churn rate was "the use of Online Security". We also developed a web-based platform with RShiny package that visualize the patterns of customers who would churn with have high probability. It also shows the probability of churn when a new customer's information entered. Through our research, telecom organizations can be aware of customers who are likely to churn and develop marketing strategies to keep these customers engaged.
+    
+</br>
+
+* Shiny App
+    + https://jmpark.shinyapps.io/Churn
